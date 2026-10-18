@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mr. Bear's Honey Ride</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Caveat:wght@600&display=swap">
+<style>
+/* Layout: one card; story scenes and three mini games swap in place */
+:root{
+  --bg:#e7f1dc; --bg2:#cfe3bd; --ink:#3b2a1a; --soft:#6f5a44; --honey:#f2a516; --honey-dk:#c67d06; --rose:#e2557f; --card:#fffaf0; --leaf:#4f8a3a;
+  --f-display:"Fredoka",ui-rounded,system-ui,sans-serif; --f-hand:"Caveat","Comic Sans MS",cursive;
+  color-scheme:light;
+}
+html,body{min-height:100%;margin:0}
+body{background:radial-gradient(circle at 20% 10%,var(--bg2),var(--bg) 60%) fixed;color:var(--ink);font-family:var(--f-display);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-top:16px;padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));
+  box-sizing:border-box;display:flex;justify-content:center;align-items:flex-start;overflow-x:hidden}
+[hidden]{display:none!important}
+.card{width:100%;max-width:400px;background:var(--card);border-radius:28px;padding:16px 14px 20px;box-sizing:border-box;box-shadow:0 18px 40px -18px rgba(59,42,26,.35)}
+.page{display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center}
+.step{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--soft);font-weight:600;margin:0}
+h1{font-size:1.4rem;margin:0;line-height:1.15;text-wrap:balance}
+p{margin:0;line-height:1.45}
+.hand{font-family:var(--f-hand);font-size:1.45rem;color:var(--honey-dk);line-height:1.1}
+.names{font-family:var(--f-hand);font-size:1.6rem;margin:0}
+.names span{color:var(--rose)}
+.note{background:#fff;border:2px dashed var(--bg2);border-radius:16px;padding:14px 16px;text-align:left;display:flex;flex-direction:column;gap:8px;width:100%;box-sizing:border-box}
+.speech{position:relative;margin-top:6px}
+.speech::before{content:"";position:absolute;top:-12px;left:50%;transform:translateX(-50%);border:10px solid transparent;border-bottom-color:var(--bg2);border-top:0}
+.sign{font-family:var(--f-hand);font-size:1.35rem;color:var(--honey-dk);text-align:right}
+.btn{font-family:var(--f-display);font-weight:600;border:0;border-radius:999px;cursor:pointer;padding:12px 28px;font-size:1.08rem;
+  background:var(--honey);color:#3b2a1a;box-shadow:0 8px 18px -8px var(--honey-dk)}
+button:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.bearimg{width:120px}
+.hud{display:flex;align-items:center;gap:10px;width:100%;font-weight:600;font-size:.92rem;font-variant-numeric:tabular-nums}
+.bar{flex:1;height:10px;background:var(--bg2);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--honey);border-radius:99px;transition:width .2s}
+.stage{position:relative;width:100%;aspect-ratio:3/4;border-radius:20px;overflow:hidden;background:#cfe8c0;touch-action:none;user-select:none;-webkit-user-select:none}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.tip{position:absolute;left:8px;right:8px;top:8px;background:rgba(255,250,240,.93);border-radius:12px;padding:6px 10px;font-size:.9rem;font-weight:600;
+  display:flex;align-items:center;gap:8px;text-align:left;pointer-events:none;z-index:2}
+.tip b{font-size:1.2rem}
+.over{position:absolute;inset:0;background:rgba(255,250,240,.96);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:18px;box-sizing:border-box;z-index:3}
+.over ul{margin:0;padding-left:18px;text-align:left;font-size:.93rem;line-height:1.4}
+.ctrl{display:flex;gap:12px;width:100%}
+.ctrl button{flex:1;font:700 1.5rem var(--f-display);padding:12px;border:0;border-radius:16px;background:var(--bg2);color:var(--ink);touch-action:manipulation}
+.ctrl button:active{background:var(--honey)}
+/* walking scenes */
+.scene{position:relative;width:100%;height:240px;border-radius:20px;overflow:hidden}
+.scene.jungle{background:linear-gradient(#bfe3f2 0 55%,#8cc472 55%)}
+.scene.town{background:linear-gradient(#ffe7c2 0 62%,#9a9a9a 62%)}
+.scene .deco{position:absolute;font-size:2.4rem;line-height:1}
+.scene .pair{position:absolute;bottom:6%;left:-60%;width:52%;display:flex;align-items:flex-end}
+.scene .pair .who{width:58%}
+.scene .pair img{width:42%;margin-left:-6%}
+.scene .pair .hold{position:absolute;left:47%;bottom:34%;font-size:1rem;z-index:2}
+.scene .pair>.who,.scene .pair>img{animation:step .4s ease-in-out infinite alternate}
+.scene.go .pair{transition:left 3.4s ease-in-out;left:46%}
+@keyframes step{from{transform:translateY(0)}to{transform:translateY(-6px)}}
+.who svg{width:100%;height:auto;display:block}
+.road{position:absolute;left:0;right:0;bottom:16%;height:4px;background:repeating-linear-gradient(90deg,#fff 0 22px,transparent 22px 40px)}
+.meet .rohit{position:absolute;right:16%;bottom:6%;width:28%}
+.meet .toby{position:absolute;right:2%;bottom:6%;font-size:2.4rem;line-height:1;text-align:center}
+.meet .toby span{display:block;font:600 .7rem var(--f-display);color:var(--ink);background:#fff;border-radius:8px;padding:1px 4px;margin-top:2px}
+.meet .toby i{display:inline-block;font-style:normal;animation:wag .35s ease-in-out infinite alternate;transform-origin:50% 90%}
+@keyframes wag{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
+.meet.go .pair{left:2%}
+.chat{width:100%;display:flex;flex-direction:column;gap:8px;text-align:left}
+.msg{max-width:86%;padding:9px 12px;border-radius:16px;font-size:.95rem;line-height:1.35;animation:pop .35s ease-out}
+.msg.bear{background:#fff3d6;align-self:flex-start;border-bottom-left-radius:4px}
+.msg.rohit{background:#dff0e6;align-self:flex-end;border-bottom-right-radius:4px}
+.msg.her{background:#fde3ea;align-self:flex-end;border-bottom-right-radius:4px}
+.msg b{display:block;font-size:.78rem;opacity:.75;margin-bottom:2px}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+.opt{background:#fff;border:2px solid var(--bg2);border-radius:14px;padding:10px 8px;font:600 .95rem var(--f-display);color:var(--ink);cursor:pointer}
+/* phone */
+.phone{width:min(260px,100%);aspect-ratio:9/17;border-radius:36px;background:#111;padding:10px;box-sizing:border-box;box-shadow:0 18px 40px -16px rgba(0,0,0,.5)}
+.screen{position:relative;width:100%;height:100%;border-radius:28px;overflow:hidden;background:linear-gradient(160deg,#ffb38a,#e2557f 55%,#6b3fa0);color:#fff;display:flex;flex-direction:column;align-items:center}
+.notch{width:90px;height:22px;background:#111;border-radius:0 0 14px 14px}
+.clock{font-size:3.2rem;font-weight:600;margin-top:18px;font-variant-numeric:tabular-nums;line-height:1}
+.date{font-size:.85rem;opacity:.9;margin-top:4px}
+.notif{width:92%;background:rgba(255,255,255,.88);color:#222;border-radius:16px;padding:9px 11px;margin-top:10px;text-align:left;font-size:.82rem;line-height:1.3;
+  opacity:0;transform:translateY(-14px) scale(.96);transition:opacity .45s,transform .45s;box-shadow:0 6px 14px -8px rgba(0,0,0,.4)}
+.notif.show{opacity:1;transform:none}
+.notif .h{display:flex;justify-content:space-between;font-size:.72rem;color:#666;margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em}
+.ring{animation:ring .25s ease-in-out 6}
+@keyframes ring{0%,100%{transform:rotate(0)}25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+
+.btn.call{background:#3fae5b;color:#fff;box-shadow:0 8px 18px -8px #2c7f41}
+.callav{width:96px;height:96px;border-radius:50%;overflow:hidden;background:#dff0e6;animation:pulse 1s ease-in-out infinite}
+.callav svg{width:100%;height:auto;margin-top:6px}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(63,174,91,.55)}50%{box-shadow:0 0 0 16px rgba(63,174,91,0)}}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:9}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<main class="card">
+
+<!-- INTRO -->
+<section class="page" id="pIntro">
+  <p class="names">Rohit's <span>&#10084;</span> Shruchi</p>
+  <img class="bearimg" id="bear1" alt="Mr. Bear">
+  <div class="note speech">
+    <p class="hand">Hi, good morning Ms. Rohit's&hellip; and only Rohit's Shruchi &#128527;</p>
+    <p>Rohit has replaced the haathi with me, <b>Mr. Bear &#128059;</b>. He noticed the elephant was not being competitive with you. He was giving you easy tasks and letting you win.</p>
+    <p><b>I am not like him.</b> Today you really have to compete. Let's play!</p>
+    <p>If you make me happy, I'll let you see your mentor, <b>Rohit</b>.</p>
+    <p>So now I'm going to collect honey &#127855;. Come with me to the jungle, keep me safe and distract the bees!</p>
+    <p class="sign">Mr. Bear &#128059;</p>
+  </div>
+  <button class="btn" id="goJungle">Take me to the jungle</button>
+</section>
+
+<!-- WALK TO JUNGLE -->
+<section class="page" id="pWalk1" hidden>
+  <h1>Mr. Bear holds your hand&hellip;</h1>
+  <div class="scene jungle" id="walk1">
+    <span class="deco" style="left:4%;bottom:38%">&#127795;</span><span class="deco" style="left:30%;bottom:46%">&#127796;</span>
+    <span class="deco" style="right:6%;bottom:40%;font-size:3.4rem">&#127795;</span><span class="deco" style="right:30%;top:10%;font-size:1.4rem">&#128029;</span>
+    <span class="deco" style="left:12%;top:12%;font-size:1.6rem">&#9728;&#65039;</span><span class="deco" style="right:12%;bottom:58%;font-size:1.6rem">&#127855;</span>
+    <div class="pair"><div class="who herW"></div><span class="hold">&#129309;</span><img class="bearW" alt="Mr. Bear holding your hand"></div>
+  </div>
+  <p class="hand" id="w1Line">&ldquo;Hold my paw, Shruchi. The honey tree is right there&hellip;&rdquo;</p>
+  <button class="btn" id="goHoney" hidden>Let's get the honey &#127855;</button>
+</section>
+
+<!-- LEVEL 1: HONEY -->
+<section class="page" id="pHoney" hidden>
+  <p class="step">Level 1 of 3 &middot; Honey heist</p>
+  <div class="hud"><span id="hLives">&#10084;&#65039;&#10084;&#65039;&#10084;&#65039;</span><div class="bar"><i id="hProg"></i></div><span id="hPct">0/3 &#127855;</span></div>
+  <div class="stage">
+    <canvas id="hCv" aria-label="Honey heist game"></canvas>
+    <div class="tip"><b>&#128059;</b><span id="hTipT">Lure the bees away from me!</span></div>
+    <div class="over" id="hStart">
+      <h1>Distract the bees! &#128029;</h1>
+      <ul>
+        <li><b>Hold a finger</b> anywhere and the bees fly to it, away from me.</li>
+        <li>Bees get <b>bored</b> fast if your finger stays still. Keep <b>drawing</b>.</li>
+        <li>You'll need <b>2&ndash;3 fingers</b>. There are a lot of bees.</li>
+        <li><b>Angry red bees</b> ignore your finger. <b>Tap them</b> to shoo them.</li>
+        <li>I need <b>3 honeycombs</b>. 3 stings and I fall.</li>
+      </ul>
+      <button class="btn" id="hGo">Start</button>
+    </div>
+    <div class="over" id="hFail" hidden>
+      <img class="bearimg" id="bearFail" alt="Stung bear">
+      <h1>Ouch! 3 stings&hellip; I fell &#128557;</h1>
+      <p class="hand" id="hFailT">Try again, Shruchi. I trust you.</p>
+      <button class="btn" id="hRetry">Try again</button>
+    </div>
+  </div>
+</section>
+
+<!-- HANDOVER -->
+<section class="page" id="pHand" hidden>
+  <img class="bearimg" id="bear2" alt="Happy bear with honey">
+  <div class="note speech">
+    <p class="hand">You're so good, Shruchi! &#127855;&#128150;</p>
+    <p>Here, <b>half of the honey is yours</b>. You earned it.</p>
+    <p>Now let's ride towards <b>Rohit</b>! You drive, I'll sit behind with the honey. But careful&hellip; the bees are not happy. They'll chase us.</p>
+    <p class="sign">Mr. Bear &#128059;</p>
+  </div>
+  <button class="btn" id="goBike">Let's ride! &#128757;</button>
+</section>
+
+<!-- LEVEL 2/3: BIKE -->
+<section class="page" id="pBike" hidden>
+  <p class="step" id="bStep">Level 2 of 3 &middot; Ride to Rohit</p>
+  <div class="hud"><span id="bKm">0.0 km</span><div class="bar"><i id="bProg"></i></div><span id="bGoal">10 km</span></div>
+  <div class="stage">
+    <canvas id="bCv" aria-label="Bike ride game"></canvas>
+    <div class="tip"><b id="bTipI">&#128059;</b><span id="bTipT">Rohit is 10 km away. Go!</span></div>
+    <div class="over" id="bStart">
+      <h1 id="bTitle">Ride to Rohit! &#128757;</h1>
+      <ul id="bRules"></ul>
+      <button class="btn" id="bGo">Start riding</button>
+    </div>
+    <div class="over" id="bFail" hidden>
+      <h1 id="bFailH">The bees caught us! &#128029;&#128029;&#128029;</h1>
+      <p class="hand" id="bFailT">Honey everywhere&hellip; try again, Shruchi!</p>
+      <p id="bAsk"><b>Do you want to try again, or call Rohit here?</b></p>
+      <button class="btn" id="bRetry">Try again &#128170;</button>
+      <button class="btn call" id="bCall">&#128222; <span id="bCallT">Call Rohit here</span></button>
+    </div>
+    <div class="over" id="bCalling" hidden>
+      <div class="callav" id="callAv"></div>
+      <h1 id="callH">Calling Rohit&hellip;</h1>
+      <p class="hand" id="callT">&#128222; Ringing&hellip;</p>
+    </div>
+  </div>
+  <div class="ctrl"><button id="lBtn" aria-label="Move left">&#9664;</button><button id="rBtn" aria-label="Move right">&#9654;</button></div>
+</section>
+
+<!-- MEET ROHIT -->
+<section class="page" id="pMeet" hidden>
+  <p class="step">10 km &middot; Rohit and Toby are waiting</p>
+  <div class="scene town meet" id="meet">
+    <div class="road"></div>
+    <span class="deco" style="left:4%;bottom:44%;font-size:1.8rem">&#127968;</span><span class="deco" style="left:40%;bottom:46%;font-size:1.6rem">&#127794;</span>
+    <div class="pair"><div class="who herW"></div><span class="hold">&#129309;</span><img class="bearW" alt="Mr. Bear holding your hand"></div>
+    <div class="who rohit" id="mHim"></div>
+    <div class="toby"><i>&#128021;</i><span>Toby</span></div>
+  </div>
+  <div class="chat" id="chat"></div>
+  <div class="opts" id="chatOpts" hidden></div>
+  <button class="btn" id="goHome" hidden>Drive home first &#127968;</button>
+</section>
+
+<!-- PHONE -->
+<section class="page" id="pPhone" hidden>
+  <p class="step">Home sweet home</p>
+  <div class="phone" id="phone"><div class="screen">
+    <div class="notch"></div>
+    <div class="clock" id="clk">9:41</div><div class="date" id="dt">Sunday</div>
+    <div class="notif" id="n1"><div class="h"><span>&#9200; Alarm</span><span>now</span></div><b>You have reached home safely &#127968;</b><br>Well done, Shruchi. Ride complete.</div>
+    <div class="notif" id="n2"><div class="h"><span>&#128059; Mr. Bear</span><span>now</span></div><b>One last task&hellip;</b><br>Send Rohit your photo &#128248; and ask him for the date &#128150;</div>
+    <div class="notif" id="n3"><div class="h"><span>&#128172; Rohit</span><span>now</span></div>Waiting for your photo&hellip; &#128064;</div>
+  </div></div>
+  <div class="note" id="endNote" hidden>
+    <p class="hand">You did it, Shruchi! &#127881;</p>
+    <p>You saved Mr. Bear from the bees, rode through Jagdalpur traffic to Rohit and Toby, convinced Rohit, and reached home safely.</p>
+    <p><b>Now send Rohit your photo and ask him for the date.</b> &#128248;&#128150; Screenshot this too, as proof.</p>
+    <p class="sign">Mr. Bear &#128059; (much tougher than the haathi)</p>
+  </div>
+</section>
+
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EMOJI='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+const wait=ms=>new Promise(r=>setTimeout(r,reduce?Math.min(ms,150):ms));
+
+function bearSVG(mood){return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<circle cx="52" cy="52" r="26" fill="#8a5a33"/><circle cx="52" cy="52" r="13" fill="#d9a46c"/>
+<circle cx="148" cy="52" r="26" fill="#8a5a33"/><circle cx="148" cy="52" r="13" fill="#d9a46c"/>
+<ellipse cx="100" cy="170" rx="62" ry="38" fill="#8a5a33"/>
+<circle cx="100" cy="100" r="62" fill="#9b6738"/>
+<ellipse cx="100" cy="122" rx="30" ry="24" fill="#e2b783"/>
+<ellipse cx="100" cy="110" rx="11" ry="8" fill="#2b1d12"/>
+${mood==='sad'?`<path d="M64 90 q10-8 20 0 M116 90 q10-8 20 0" stroke="#2b1d12" stroke-width="5" fill="none" stroke-linecap="round"/>
+<path d="M70 96 q-5 16 -1 28 q7 3 9 -3 q0-12 -8-25z M130 96 q5 16 1 28 q-7 3 -9 -3 q0-12 8-25z" fill="#7cc6f2"/>
+<path d="M88 138 q12-8 24 0" stroke="#2b1d12" stroke-width="4" fill="none" stroke-linecap="round"/>`
+:`<circle cx="76" cy="88" r="8" fill="#2b1d12"/><circle cx="124" cy="88" r="8" fill="#2b1d12"/>
+<circle cx="79" cy="85" r="2.6" fill="#fff"/><circle cx="127" cy="85" r="2.6" fill="#fff"/>
+<path d="M86 128 q14 12 28 0" stroke="#2b1d12" stroke-width="4" fill="none" stroke-linecap="round"/>`}
+<ellipse cx="66" cy="112" rx="9" ry="5" fill="#e98a7a" opacity=".55"/><ellipse cx="134" cy="112" rx="9" ry="5" fill="#e98a7a" opacity=".55"/>
+${mood==='honey'?`<g transform="translate(118 140)"><path d="M0 8 h40 l-4 34 h-32z" fill="#f2a516" stroke="#c67d06" stroke-width="3"/><rect x="-2" y="2" width="44" height="8" rx="3" fill="#c67d06"/><text x="20" y="32" font-size="12" text-anchor="middle" font-family="sans-serif" font-weight="700" fill="#7a4a03">HONEY</text></g>`:''}
+</svg>`}
+const enc=s=>'data:image/svg+xml,'+encodeURIComponent(s);
+
+const BEAR=enc(bearSVG('happy')),BEAR_SAD=enc(bearSVG('sad')),BEAR_HONEY=enc(bearSVG('honey'));
+$('bear1').src=BEAR;$('bearFail').src=BEAR_SAD;$('bear2').src=BEAR_HONEY;
+const bearImg=new Image();bearImg.src=BEAR;const bearSadImg=new Image();bearSadImg.src=BEAR_SAD;
+const HER=`<svg viewBox="0 0 200 270" xmlns="http://www.w3.org/2000/svg">
+<path d="M52 92 C22 140 26 205 50 248 C66 254 74 236 68 214 C58 176 60 132 72 104Z" fill="#1d1416"/>
+<rect x="88" y="145" width="24" height="34" rx="8" fill="#94603e"/>
+<path d="M36 270 Q40 188 100 176 Q160 188 164 270Z" fill="#2c3e6b"/>
+<path d="M36 270 Q38 206 66 184 L80 206 Q62 222 62 270Z" fill="#d93a3a"/>
+<path d="M164 270 Q162 206 134 184 L120 206 Q138 222 138 270Z" fill="#d93a3a"/>
+<path d="M86 177 Q100 194 114 177" stroke="#1f2d50" stroke-width="4" fill="none" stroke-linecap="round"/>
+<path d="M90 222 c0-8 10-8 10 0 c0-8 10-8 10 0 c0 8-10 14-10 17 c0-3-10-9-10-17z" fill="#e2557f"/>
+<ellipse cx="100" cy="100" rx="46" ry="53" fill="#a8704b"/>
+<ellipse cx="55" cy="104" rx="8" ry="11" fill="#a8704b"/>
+<circle cx="56" cy="117" r="3.2" fill="none" stroke="#e6e6ef" stroke-width="1.8"/>
+<path d="M54 98 Q50 42 100 40 Q150 42 146 98 Q142 66 120 58 Q104 53 100 56 Q96 53 80 58 Q58 66 54 98Z" fill="#1d1416"/>
+<path d="M72 86 q11 -6 22 -1" stroke="#1d1416" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<path d="M106 85 q11 -5 22 1" stroke="#1d1416" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<path d="M74 101 q9 -8 19 0" stroke="#2a1a14" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<path d="M107 101 q9 -8 19 0" stroke="#2a1a14" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<path d="M98 106 q-4 12 2 15 q4 1 6 -1" stroke="#7d4e32" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+<ellipse cx="76" cy="118" rx="9" ry="5" fill="#e07a86" opacity=".45"/><ellipse cx="124" cy="118" rx="9" ry="5" fill="#e07a86" opacity=".45"/>
+<path d="M84 129 q17 11 34 -3" stroke="#b5626e" stroke-width="5" fill="none" stroke-linecap="round"/>
+</svg>`;
+const HIM=`<svg viewBox="0 0 200 270" xmlns="http://www.w3.org/2000/svg">
+<rect x="88" y="145" width="24" height="34" rx="8" fill="#8a5a3a"/>
+<path d="M32 270 Q36 186 100 176 Q164 186 168 270Z" fill="#3d6e66"/>
+<path d="M84 177 L100 196 L116 177" stroke="#fff7f9" stroke-width="5" fill="none" stroke-linejoin="round"/>
+<ellipse cx="100" cy="102" rx="47" ry="53" fill="#9c6644"/>
+<ellipse cx="53" cy="106" rx="8" ry="11" fill="#9c6644"/><ellipse cx="147" cy="106" rx="8" ry="11" fill="#9c6644"/>
+<path d="M52 96 Q46 40 100 38 Q156 40 148 96 Q146 72 132 66 Q120 74 96 66 Q80 72 68 68 Q56 76 52 96Z" fill="#1a1414"/>
+<path d="M72 86 q11 -5 22 -1" stroke="#1a1414" stroke-width="4" fill="none" stroke-linecap="round"/>
+<path d="M106 85 q11 -4 22 1" stroke="#1a1414" stroke-width="4" fill="none" stroke-linecap="round"/>
+<circle cx="83" cy="100" r="6" fill="#22160f"/><circle cx="117" cy="100" r="6" fill="#22160f"/><circle cx="85" cy="98" r="2" fill="#fff"/><circle cx="119" cy="98" r="2" fill="#fff"/>
+<path d="M98 106 q-4 12 2 15 q4 1 6 -1" stroke="#6e4428" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+<path d="M82 128 q18 16 36 0" stroke="#5a2a2a" stroke-width="4.5" fill="#fff" stroke-linecap="round"/>
+<ellipse cx="74" cy="119" rx="8" ry="4.5" fill="#e07a86" opacity=".35"/><ellipse cx="126" cy="119" rx="8" ry="4.5" fill="#e07a86" opacity=".35"/>
+</svg>`;
+
+document.querySelectorAll('.herW').forEach(e=>e.innerHTML=HER);
+document.querySelectorAll('.bearW').forEach((e,i)=>e.src=i?BEAR_HONEY:BEAR);
+$('mHim').innerHTML=HIM;
+
+/* ===== confetti ===== */
+const fx=$('fx'),fc=fx.getContext('2d');let parts=[];
+function fxSize(){fx.width=innerWidth;fx.height=innerHeight}fxSize();addEventListener('resize',fxSize);
+function burst(){if(reduce)return;const run=!parts.length;for(let i=0;i<140;i++)parts.push({x:innerWidth/2,y:innerHeight/2,vx:(Math.random()-.5)*13,vy:-Math.random()*13-4,s:6+Math.random()*10,c:['#e2557f','#f2a516','#4f8a3a','#ffd166'][i%4]});if(run)requestAnimationFrame(tick)}
+function heart(x,y,s,c){fc.fillStyle=c;fc.beginPath();fc.moveTo(x,y+s/4);fc.bezierCurveTo(x,y,x-s/2,y,x-s/2,y+s/4);fc.bezierCurveTo(x-s/2,y+s/2,x,y+s*.7,x,y+s);fc.bezierCurveTo(x,y+s*.7,x+s/2,y+s/2,x+s/2,y+s/4);fc.bezierCurveTo(x+s/2,y,x,y,x,y+s/4);fc.fill()}
+function tick(){fc.clearRect(0,0,fx.width,fx.height);parts.forEach(p=>{p.vy+=.25;p.x+=p.vx;p.y+=p.vy;heart(p.x,p.y,p.s,p.c)});parts=parts.filter(p=>p.y<innerHeight+40);if(parts.length)requestAnimationFrame(tick);else fc.clearRect(0,0,fx.width,fx.height)}
+
+const PAGES=['pIntro','pWalk1','pHoney','pHand','pBike','pMeet','pPhone'];
+function page(id){PAGES.forEach(k=>$(k).hidden=k!==id);scrollTo(0,0)}
+function sizeCanvas(cv,ctx){const r=cv.getBoundingClientRect();const d=Math.min(2,devicePixelRatio||1);cv.width=r.width*d;cv.height=r.height*d;ctx.setTransform(d,0,0,d,0,0);return[r.width,r.height]}
+
+/* ===== walk into the jungle ===== */
+async function walkJungle(){page('pWalk1');const s=$('walk1');s.classList.remove('go');$('goHoney').hidden=true;
+  $('w1Line').textContent='“Hold my paw, Shruchi. The honey tree is right there…”';
+  await wait(60);s.classList.add('go');await wait(3600);
+  $('w1Line').textContent='“Here we are. Lots of bees today… I really need you.”';$('goHoney').hidden=false}
+
+/* ===================== LEVEL 1: HONEY HEIST ===================== */
+const Honey=(()=>{const cv=$('hCv'),ctx=cv.getContext('2d');let W=0,H=0;
+  let bees=[],lures=new Map(),lives=3,hive=0,fill=0,bearY=0,bearTargetY=0,on=false,last=0,angryT=0,hitFlash=0,elapsed=0,tipLock=0;
+  const hives=()=>[{x:W*.2,y:H*.6},{x:W*.8,y:H*.42},{x:W*.24,y:H*.24}];
+  function hud(){$('hLives').textContent='❤️'.repeat(lives)+'\u{1F90D}'.repeat(3-lives);
+    $('hProg').style.width=((hive+fill/100)/3*100)+'%';$('hPct').textContent=`${hive}/3 \u{1F36F}`}
+  function tip(t,force){if(!force&&performance.now()<tipLock)return;$('hTipT').textContent=t}
+  function bearPos(){return{x:W*.5,y:bearY}}
+  function addBee(){const h=hives()[Math.min(hive,2)];bees.push({x:h.x+(Math.random()-.5)*60,y:h.y+(Math.random()-.5)*40,vx:0,vy:0,st:'wander',t:0,idle:0,ph:Math.random()*6})}
+  function reset(){[W,H]=sizeCanvas(cv,ctx);bees=[];lures.clear();lives=3;hive=0;fill=0;bearY=H*.92;bearTargetY=hives()[0].y+16;angryT=1.8;elapsed=0;hitFlash=0;
+    for(let i=0;i<5;i++)addBee();hud();tip('Hold a finger away from me to lure the bees!',true)}
+  function pt(e){const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+  cv.addEventListener('pointerdown',e=>{if(!on)return;e.preventDefault();try{cv.setPointerCapture(e.pointerId)}catch(_){}
+    const p=pt(e),now=performance.now();lures.set(e.pointerId,{x:p.x,y:p.y,moved:now});
+    for(const b of bees){if(Math.hypot(b.x-p.x,b.y-p.y)<42&&b.st!=='scared'){const a=Math.atan2(b.y-p.y,b.x-p.x);b.st='scared';b.t=1.1;b.vx=Math.cos(a)*5;b.vy=Math.sin(a)*5}}});
+  cv.addEventListener('pointermove',e=>{const l=lures.get(e.pointerId);if(!l)return;const p=pt(e);if(Math.hypot(p.x-l.x,p.y-l.y)>6)l.moved=performance.now();l.x=p.x;l.y=p.y});
+  ['pointerup','pointercancel','pointerleave'].forEach(t=>cv.addEventListener(t,e=>lures.delete(e.pointerId)));
+  const BORED=1400;
+  function liveLures(now){const out=[];lures.forEach(l=>{if(now-l.moved<BORED)out.push(l)});return out}
+  function loop(t){if(!on)return;const dt=Math.max(0,Math.min(40,t-last))/16.67;last=t;const now=performance.now();elapsed+=dt/60;
+    const sc=H/480,bp=bearPos(),L=liveLures(now),hv=hives();
+    if(Math.abs(bearY-bearTargetY)>2){bearY+=Math.sign(bearTargetY-bearY)*Math.min(Math.abs(bearTargetY-bearY),1.5*sc*dt)}
+    else{const near=bees.some(b=>Math.hypot(b.x-bp.x,b.y-bp.y)<75*sc);
+      if(!near){fill+=0.3*dt;if(fill>=100){fill=0;hive++;hud();
+        if(hive>=3){on=false;win();return}
+        bearTargetY=hv[hive].y+16;addBee();addBee();tip(hive===1?'One done! More bees now. Use 2 fingers!':'Last one! Use 3 fingers and keep drawing!',true);tipLock=now+2200}}
+      else if(now>tipLock)tip('Bees near me! I can’t collect!')}
+    angryT-=dt/60;if(angryT<=0){const c=bees.filter(b=>b.st!=='angry'&&b.st!=='scared');if(c.length){const n=hive>=2&&Math.random()<.4?2:1;
+        for(let k=0;k<n&&c.length;k++){const b=c.splice(Math.floor(Math.random()*c.length),1)[0];b.st='angry'}
+        tip(n>1?'TWO angry bees! Tap them!':'Angry red bee! TAP it!',true);tipLock=now+1400}
+      angryT=Math.max(1.2,2.9-hive*.6-elapsed*.02)+Math.random()*1.0}
+    if(L.length===0&&lures.size>0&&now>tipLock)tip('The bees are bored. Keep your finger moving!');
+    for(const b of bees){b.ph+=.15*dt;let tx,ty,sp;
+      if(b.st==='scared'){b.t-=dt/60;b.x+=b.vx*dt*sc;b.y+=b.vy*dt*sc;b.vx*=.97;b.vy*=.97;if(b.t<=0){b.st='wander';b.idle=0}}
+      else{
+        if(b.st==='angry'){tx=bp.x;ty=bp.y;sp=2.05+hive*.3}
+        else{let best=null,bd=1e9;for(const l of L){const d=Math.hypot(l.x-b.x,l.y-b.y);if(d<bd){bd=d;best=l}}
+          if(best&&bd<W*1.2){b.st='lured';b.idle=0;tx=best.x+Math.cos(b.ph)*22;ty=best.y+Math.sin(b.ph)*16;sp=3}
+          else{b.st='wander';b.idle+=dt/60;const h=hv[Math.min(hive,2)];
+            if(b.idle>1.1){tx=bp.x;ty=bp.y;sp=1.1+hive*.25}else{tx=h.x+Math.cos(b.ph*.6)*40;ty=h.y+Math.sin(b.ph)*26;sp=1.5}}}
+        const a=Math.atan2(ty-b.y,tx-b.x),d=Math.hypot(tx-b.x,ty-b.y);const s=Math.min(d,sp*sc*dt);b.x+=Math.cos(a)*s+(Math.random()-.5)*.9;b.y+=Math.sin(a)*s+(Math.random()-.5)*.9}
+      b.x=Math.max(-30,Math.min(W+30,b.x));b.y=Math.max(-30,Math.min(H+30,b.y));
+      if(b.st!=='scared'&&Math.hypot(b.x-bp.x,b.y-bp.y)<22*sc){lives--;hitFlash=1;hud();
+        const a=Math.atan2(b.y-bp.y,b.x-bp.x);b.st='scared';b.t=1.4;b.vx=Math.cos(a)*6;b.vy=Math.sin(a)*6;
+        tip('OUCH! I got stung!',true);tipLock=now+1200;if(lives<=0){on=false;draw(t);setTimeout(fail,450);return}}}
+    draw(t);requestAnimationFrame(loop)}
+  function draw(t){const sc=H/480,hv=hives(),bp=bearPos();ctx.clearRect(0,0,W,H);
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#bfe3f2');g.addColorStop(.55,'#d6efc7');g.addColorStop(1,'#9fcf86');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='#7fb46a';for(let i=0;i<6;i++){ctx.beginPath();ctx.arc(W*(i/5),H*.97,W*.16,0,7);ctx.fill()}
+    ctx.fillStyle='#5f9a4c';for(let i=0;i<4;i++){ctx.beginPath();ctx.arc(W*(.1+i*.27),H*.12,W*.2,0,7);ctx.fill()}
+    ctx.fillStyle='#7a5230';ctx.fillRect(W*.43,H*.12,W*.14,H*.9);
+    ctx.strokeStyle='#7a5230';ctx.lineCap='round';ctx.lineWidth=12*sc;
+    hv.forEach(h=>{ctx.beginPath();ctx.moveTo(W*.5,h.y-10*sc);ctx.lineTo(h.x,h.y-18*sc);ctx.stroke()});
+    ctx.fillStyle='#4f8a3a';[[.2,.17],[.8,.33],[.5,.08],[.14,.5],[.86,.5]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(W*x,H*y,W*.11,0,7);ctx.fill()});
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    hv.forEach((h,i)=>{ctx.globalAlpha=i<hive?.25:1;ctx.font=`${30*sc}px ${EMOJI}`;ctx.fillText('\u{1F36F}',h.x,h.y);ctx.globalAlpha=1});
+    const now=performance.now();lures.forEach(l=>{const live=now-l.moved<BORED;ctx.beginPath();ctx.arc(l.x,l.y,26*sc,0,7);ctx.fillStyle=live?'rgba(242,165,22,.28)':'rgba(120,120,120,.18)';ctx.fill();
+      ctx.font=`${20*sc}px ${EMOJI}`;ctx.fillText(live?'\u{1F33C}':'\u{1F4A4}',l.x,l.y)});
+    const bw=58*sc,img=hitFlash>0?bearSadImg:bearImg;let sx=0;if(hitFlash>0){sx=(Math.random()-.5)*10;hitFlash-=.03}
+    if(img.complete)ctx.drawImage(img,bp.x-bw/2+sx,bp.y-bw/2,bw,bw);
+    if(Math.abs(bearY-bearTargetY)<=2&&hive<3){ctx.fillStyle='#fff';ctx.fillRect(bp.x-26*sc,bp.y-bw/2-12*sc,52*sc,7*sc);ctx.fillStyle='#f2a516';ctx.fillRect(bp.x-26*sc,bp.y-bw/2-12*sc,52*sc*fill/100,7*sc)}
+    for(const b of bees){ctx.save();ctx.translate(b.x,b.y);if(b.st==='angry'){ctx.beginPath();ctx.arc(0,0,17*sc,0,7);ctx.fillStyle='rgba(226,40,40,.38)';ctx.fill()}
+      ctx.font=`${22*sc}px ${EMOJI}`;ctx.fillText('\u{1F41D}',0,Math.sin(b.ph*2)*2);ctx.restore()}}
+  function fail(){const lines=['Try again, Shruchi. I trust you.','The haathi would have let you win. I won’t. Again!','Almost! Use more fingers this time.','Tap the red ones faster!'];
+    $('hFailT').textContent=lines[Math.floor(Math.random()*lines.length)];$('hFail').hidden=false}
+  function win(){draw(performance.now());burst();setTimeout(()=>page('pHand'),900)}
+  function start(){$('hStart').hidden=true;$('hFail').hidden=true;reset();on=true;last=performance.now();requestAnimationFrame(loop)}
+  $('hGo').onclick=start;$('hRetry').onclick=start;
+  return{show(){page('pHoney');$('hStart').hidden=false;$('hFail').hidden=true;reset();draw(0)},win(){on=false;hive=3;win()}};
+})();
+
+/* ===================== LEVELS 2 & 3: BIKE ===================== */
+const MODES={
+  rohit:{step:'Level 2 of 3 · Ride to Rohit',goal:10,title:'Ride to Rohit! \u{1F6F5}',bees:true,night:false,
+    rules:['<b>Swipe</b> or use the <b>◀ ▶</b> buttons to change lanes.','Dodge cars, autos, cows and crowds.','At <b>barricades</b> only one lane is open. Find it fast!','The <b>bees are chasing</b>. Every hit lets them come closer.','Reach <b>10 km</b>. Rohit and Toby are waiting.'],
+    failH:'The bees caught us! \u{1F41D}\u{1F41D}\u{1F41D}',failT:'Honey everywhere… Tired already, Ms. Competitive? \u{1F60F}',callBtn:'Call Rohit here',calling:['Rohit: Hello? Shruchi?','Rohit: Stay right there. I’m coming with Toby! \u{1F6F5}\u{1F415}'],start:'Rohit is 10 km away. Go!'},
+  home:{step:'Level 3 of 3 · Drive home',goal:6,title:'Drive home safely! \u{1F3E0}',bees:false,night:true,
+    rules:['It’s evening. Traffic is heavier and faster.','Watch for <b>potholes</b>, stray dogs and crowds.','You have <b>3 lives</b>. 3 hits and you start again.','Reach home: <b>6 km</b>.'],
+    failH:'Too many bumps! \u{1F635}',failT:'Rohit says: drive carefully, Shruchi.',callBtn:'Call Rohit to drop you home',calling:['Rohit: Hello? Shruchi?','Rohit: Don’t worry, I’ll drop you home myself. \u{1F6F5}\u{1F3E0}'],start:'Home is 6 km away. Drive safe!'}};
+const calledRohit={ride:false,home:false};
+const Bike=(()=>{const cv=$('bCv'),ctx=cv.getContext('2d');let W=0,H=0,M=MODES.rohit;
+  let lane=1,bx=0,obs=[],km=0,v=0,gap=100,lives=3,on=false,last=0,toRow=0,slow=0,shake=0,scroll=0,lastGap=1,tipT=0,onDone=null;
+  const LX=i=>W*(i+.5)/3;
+  const CARS=['\u{1F697}','\u{1F695}','\u{1F6FA}','\u{1F404}','\u{1F68C}','\u{1F6B6}','\u{1F69A}'];
+  const NIGHT=['\u{1F697}','\u{1F695}','\u{1F6FA}','\u{1F415}','\u{1F68C}','\u{1F6B6}','\u{1F573}️'];
+  function tip(t){$('bTipT').textContent=t;tipT=performance.now()+1800}
+  function hud(){$('bKm').textContent=km.toFixed(1)+' km'+(M.bees?'':'  '+'❤️'.repeat(Math.max(0,lives)));$('bProg').style.width=Math.min(100,km/M.goal*100)+'%'}
+  function reset(){[W,H]=sizeCanvas(cv,ctx);lane=1;bx=LX(1);obs=[];km=0;v=0;gap=100;lives=3;toRow=H*.3;slow=0;shake=0;lastGap=1;hud();$('bTipT').textContent=M.start}
+  function move(d){if(!on)return;lane=Math.max(0,Math.min(2,lane+d))}
+  $('lBtn').addEventListener('pointerdown',e=>{e.preventDefault();move(-1)});$('rBtn').addEventListener('pointerdown',e=>{e.preventDefault();move(1)});
+  addEventListener('keydown',e=>{if(e.key==='ArrowLeft')move(-1);if(e.key==='ArrowRight')move(1)});
+  let sx0=null;cv.addEventListener('pointerdown',e=>{sx0=e.clientX});
+  cv.addEventListener('pointerup',e=>{if(sx0==null)return;const dx=e.clientX-sx0;const r=cv.getBoundingClientRect();
+    if(Math.abs(dx)>25)move(dx>0?1:-1);else move(e.clientX-r.left<r.width/2?-1:1);sx0=null});
+  function spawnRow(){const r=Math.random(),prog=km/M.goal,pool=M.night?NIGHT:CARS;let free;
+    if(r<.22+prog*.2){free=Math.random()<.75?(lastGap+(Math.random()<.5?1:2))%3:Math.floor(Math.random()*3);
+      for(let i=0;i<3;i++)if(i!==free)obs.push({lane:i,y:-40,e:'\u{1F6A7}',bar:true});lastGap=free;tip('Barricade! Only one lane open!')}
+    else if(r<.68+prog*.12){free=Math.floor(Math.random()*3);
+      for(let i=0;i<3;i++)if(i!==free)obs.push({lane:i,y:-40,e:pool[Math.floor(Math.random()*pool.length)]});lastGap=free}
+    else{const i=Math.floor(Math.random()*3);obs.push({lane:i,y:-40,e:pool[Math.floor(Math.random()*pool.length)]});lastGap=(i+1)%3}}
+  function loop(t){if(!on)return;const dt=Math.max(0,Math.min(40,t-last))/16.67;last=t;const sc=H/480,prog=km/M.goal;
+    const base=M.night?4.2:3.9,target=(base+prog*3.8)*sc;v+=(target-v)*.05*dt;const sp=v*(slow>0?.55:1);if(slow>0)slow-=dt/60;
+    scroll=(scroll+sp*dt)%(40*sc);km+=sp*dt/sc*(M.night?0.0011:0.00153);hud();
+    if(M.bees)gap=Math.min(100,gap+1.8*dt/60);
+    toRow-=sp*dt;if(toRow<=0){spawnRow();toRow=(160-prog*60)*sc}
+    bx+=(LX(lane)-bx)*.3*dt;const by=H*.74;
+    for(const o of obs){o.y+=sp*dt;if(!o.hit&&Math.abs(o.y-by)<30*sc&&o.lane===lane&&Math.abs(bx-LX(lane))<W*.12){o.hit=true;slow=1;shake=1;
+      if(M.bees){gap-=40;tip(gap>40?'Ouch! The bees are getting closer!':'Bees are RIGHT behind us!!')}else{lives--;tip(lives>1?'Bump! Careful, Shruchi!':'Last life! Drive carefully!')}}}
+    obs=obs.filter(o=>o.y<H+50);
+    if(performance.now()>tipT){const left=(M.goal-km).toFixed(1);$('bTipT').textContent=M.bees?(km<M.goal*.5?`Keep going! ${left} km to Rohit.`:km<M.goal*.85?'Halfway! Faster, the bees are angry!':'Almost there! I can see Rohit and Toby!'):(km<M.goal*.6?`${left} km to home. Stay focused!`:'Almost home! Careful now.')}
+    if((M.bees&&gap<=0)||(!M.bees&&lives<=0)){on=false;draw(t);setTimeout(()=>{$('bFail').hidden=false},400);return}
+    if(km>=M.goal){on=false;km=M.goal;hud();draw(t);burst();setTimeout(()=>onDone&&onDone(),700);return}
+    draw(t);requestAnimationFrame(loop)}
+  function draw(t){const sc=H/480;ctx.clearRect(0,0,W,H);
+    ctx.fillStyle=M.night?'#2f4a3a':'#7fb46a';ctx.fillRect(0,0,W,H);ctx.fillStyle=M.night?'#33363d':'#5b5f66';ctx.fillRect(W*.04,0,W*.92,H);
+    ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=4*sc;ctx.setLineDash([22*sc,18*sc]);ctx.lineDashOffset=-scroll;
+    [1,2].forEach(i=>{ctx.beginPath();ctx.moveTo(W*i/3,0);ctx.lineTo(W*i/3,H);ctx.stroke()});ctx.setLineDash([]);
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font=`${18*sc}px ${EMOJI}`;for(let y=-40;y<H+40;y+=80*sc){const yy=(y+scroll*2)%(H+80)-40;ctx.fillText(M.night?'\u{1F3EE}':'\u{1F333}',W*.02,yy);ctx.fillText(M.night?'\u{1F3E0}':'\u{1F334}',W*.98,yy+40*sc)}
+    for(const o of obs){ctx.globalAlpha=o.hit?.35:1;ctx.font=`${(o.bar?30:34)*sc}px ${EMOJI}`;ctx.fillText(o.e,LX(o.lane),o.y);ctx.globalAlpha=1}
+    let sx=0;if(shake>0){sx=(Math.random()-.5)*10;shake-=.04}
+    const by=H*.74;
+    if(M.night){const g=ctx.createRadialGradient(bx,by-60*sc,4,bx,by-60*sc,90*sc);g.addColorStop(0,'rgba(255,240,180,.35)');g.addColorStop(1,'rgba(255,240,180,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(bx,by-60*sc,90*sc,0,7);ctx.fill()}
+    ctx.font=`${40*sc}px ${EMOJI}`;ctx.fillText('\u{1F6F5}',bx+sx,by);
+    if(M.bees){ctx.font=`${20*sc}px ${EMOJI}`;ctx.fillText('\u{1F43B}',bx+sx+4*sc,by+22*sc);ctx.font=`${14*sc}px ${EMOJI}`;ctx.fillText('\u{1F36F}',bx+sx+20*sc,by+26*sc);
+      const beeY=by+44*sc+(gap/100)*H*.3;ctx.font=`${22*sc}px ${EMOJI}`;
+      for(let i=0;i<5;i++)ctx.fillText('\u{1F41D}',bx+(i-2)*22*sc+Math.sin(t/120+i)*4,beeY+Math.cos(t/150+i)*5+(i%2)*8*sc);
+      if(gap<35){ctx.fillStyle='rgba(226,40,40,.18)';ctx.fillRect(0,0,W,H)}}
+    else if(lives===1){ctx.fillStyle='rgba(226,40,40,.15)';ctx.fillRect(0,0,W,H)}}
+  function start(){$('bStart').hidden=true;$('bFail').hidden=true;reset();on=true;last=performance.now();requestAnimationFrame(loop)}
+  $('bGo').onclick=start;$('bRetry').onclick=start;
+  $('callAv').innerHTML=HIM;
+  $('bCall').onclick=async()=>{$('bFail').hidden=true;$('bCalling').hidden=false;$('callH').textContent='Calling Rohit…';$('callT').textContent='\u{1F4DE} Ringing…';
+    await wait(1800);$('callH').textContent='Rohit picked up! \u{1F60A}';$('callT').textContent=M.calling[0];await wait(1500);$('callT').textContent=M.calling[1];await wait(2200);
+    $('bCalling').hidden=true;calledRohit[M===MODES.rohit?'ride':'home']=true;onDone&&onDone()};
+  return{show(mode,done){M=MODES[mode];onDone=done;page('pBike');$('bStep').textContent=M.step;$('bGoal').textContent=M.goal+' km';$('bTitle').textContent=M.title;
+      $('bRules').innerHTML=M.rules.map(r=>`<li>${r}</li>`).join('');$('bFailH').textContent=M.failH;$('bFailT').textContent=M.failT;$('bCallT').textContent=M.callBtn;$('bCalling').hidden=true;$('bTipI').textContent=M.bees?'\u{1F43B}':'\u{1F3E0}';
+      $('bStart').hidden=false;$('bFail').hidden=true;reset();draw(0)},
+    win(){on=false;km=M.goal;onDone&&onDone()}};
+})();
+
+/* ===================== MEET ROHIT + TOBY ===================== */
+function say(who,text){const d=document.createElement('div');d.className='msg '+who;
+  d.innerHTML=`<b>${who==='bear'?'\u{1F43B} Mr. Bear':who==='rohit'?'Rohit':'Shruchi'}</b>`;d.appendChild(document.createTextNode(text));$('chat').appendChild(d);d.scrollIntoView({block:'nearest',behavior:reduce?'auto':'smooth'})}
+function ask(options){return new Promise(res=>{const box=$('chatOpts');box.innerHTML='';box.hidden=false;
+  options.forEach(o=>{const b=document.createElement('button');b.className='opt';b.textContent=o;b.onclick=()=>{box.hidden=true;res(o)};box.appendChild(b)})})}
+async function meetRohit(){page('pMeet');const m=$('meet');m.classList.remove('go');$('chat').innerHTML='';$('goHome').hidden=true;$('chatOpts').hidden=true;
+  await wait(60);m.classList.add('go');await wait(3500);
+  say('bear','Rohit! This is Shruchi. She is a really competitive player and a very hard-working girl.');await wait(2400);
+  say('bear',calledRohit.ride?'Our team’s haathi was not competitive with her, so I tested her properly. She saved me from the bees and fought those crazy roads till the end. Smart girl, she even called you. Please go on a date with her!':'Our team’s haathi was not competitive with her, so I tested her properly. She saved me from the bees AND rode 10 km. Please go on a date with her!');await wait(3200);
+  say('rohit','Hmm… okay, I will decide. \u{1F914}');await wait(2000);
+  say('rohit','I trust you, Bear. So I’ve decided… I’ll go with you, Shruchi. \u{1F60A}');await wait(2200);
+  say('rohit','But first tell me, where will you take me?');
+  const a1=await ask(['Momos at a café \u{1F95F}','Chitrakote Falls \u{1F30A}','A long drive \u{1F6F5}','Surprise! \u{1F381}']);say('her',a1);await wait(1200);
+  say('rohit',a1.startsWith('Surprise')?'A surprise? Now I’m curious… \u{1F440}':'Nice choice. I like it already. \u{1F60C}');await wait(1600);
+  say('rohit','And what will we eat?');
+  const a2=await ask(['Momos \u{1F95F}','Thukpa \u{1F35C}','Italian \u{1F35D}','You choose, Rohit \u{1F60F}']);say('her',a2);await wait(1200);
+  say('rohit',a2.startsWith('Italian')?'Italian! You really know me. \u{1F35D}':a2.startsWith('You')?'Smart move. Then I choose… you pay. \u{1F602}':'Perfect. Done deal!');await wait(1700);
+  say('rohit','And who pays? \u{1F604}');
+  const a3=await ask(['Me, Shruchi \u{1F4B8}','Rohit, obviously','Half-half \u{1F91D}','Mr. Bear \u{1F43B}']);say('her',a3);await wait(1200);
+  say('bear',a3.startsWith('Mr. Bear')?'Me?! I only have honey… \u{1F36F}\u{1F602}':'Ha! Rohit, she’s not going to lose this one either.');await wait(1800);
+  say('rohit','Okay, I’ll go! \u{1F496} But first, you have to reach home safely. Drive back carefully, Shruchi.');await wait(1400);
+  say('bear','Toby and I will stay with Rohit. Go! \u{1F415}');await wait(900);
+  $('goHome').hidden=false}
+
+/* ===================== PHONE ===================== */
+async function phone(){page('pPhone');$('n1').lastChild.textContent=calledRohit.home?'Rohit dropped you home. What a gentleman. \u{1F60C}':'Well done, Shruchi. Ride complete.';['n1','n2','n3'].forEach(id=>$(id).classList.remove('show'));$('endNote').hidden=true;
+  const d=new Date();$('clk').textContent=d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}).replace(/\s?[AP]M/i,'');
+  $('dt').textContent=d.toLocaleDateString([], {weekday:'long',day:'numeric',month:'long'});
+  await wait(700);$('n1').classList.add('show');$('phone').classList.remove('ring');void $('phone').offsetWidth;$('phone').classList.add('ring');
+  await wait(1800);$('n2').classList.add('show');await wait(1600);$('n3').classList.add('show');burst();await wait(900);$('endNote').hidden=false}
+
+/* ===================== FLOW ===================== */
+$('goJungle').onclick=walkJungle;
+$('goHoney').onclick=()=>Honey.show();
+$('goBike').onclick=()=>Bike.show('rohit',meetRohit);
+$('goHome').onclick=()=>Bike.show('home',phone);
+window.__test={honeyWin:()=>Honey.win(),bikeWin:()=>Bike.win()};
+</script>
+</body>
+</html>
